@@ -255,9 +255,7 @@ get_allFileToLandmarkMap(const std::vector<std::pair<std::string, std::string>> 
   FileToLandmarksMapType allLandmarks;
 
   // Process all subjects
-  for (std::vector<std::pair<std::string, std::string>>::const_iterator subject_iter = subjects.begin();
-       subject_iter != subjects.end();
-       ++subject_iter)
+  for (auto subject_iter = subjects.begin(); subject_iter != subjects.end(); ++subject_iter)
   {
     std::cout << "Processing " << subject_iter->second << "(" << subject_iter->first << ")" << std::endl;
     allLandmarks[subject_iter->first] = ReadSlicer3toITKLmk(subject_iter->second);
@@ -398,7 +396,7 @@ main(int argc, char * argv[])
   for (const auto & landmark_type : landmark_types)
   {
     std::vector<std::pair<std::string, vnl_matrix<double>>> perLandmarkMatrix;
-    for (std::vector<std::string>::const_iterator lit = landmark_type.second.begin(); lit != landmark_type.second.end(); ++lit)
+    for (auto lit = landmark_type.second.begin(); lit != landmark_type.second.end(); ++lit)
     {
       landmarkNames.push_back(*lit);
       vnl_matrix<double> CurrentLandmarkMatrix(allFileToLandmarkMap.size(), 3);
