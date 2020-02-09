@@ -251,7 +251,7 @@ DoConversion(int argc, char * argv[])
   if (bsplineInputXfrm.IsNotNull())
   {
     transformList->pop_front();
-    if (transformList->size() == 0)
+    if (transformList->empty())
     {
       std::cerr << "Error, the second transform needed for BSplineDeformableTransform is missing." << std::endl;
       return EXIT_FAILURE;
@@ -409,7 +409,7 @@ DoConversion(int argc, char * argv[])
 
   //
   // if no transform name given, don't write transform
-  if (outputTransform.size() == 0)
+  if (outputTransform.empty())
   {
     return EXIT_SUCCESS;
   }
