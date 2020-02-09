@@ -30,8 +30,10 @@
 #include "itkFindCenterOfBrainFilter.h"
 #include "BRAINSHoughEyeDetector.h"
 
-#include <BRAINSFitHelper.h>
 #include "itkLandmarkBasedTransformInitializer.h"
+#include "math.h"
+#include <BRAINSFitHelper.h>
+
 
 std::string
 local_to_string(unsigned int i)
@@ -673,7 +675,7 @@ landmarksConstellationDetector::FindVectorFromPointAndVectors(SImageType::PointT
 {
   SImageType::PointType::VectorType BC;
 
-  double cosTheta; // cosine of the angle from BA to BC
+  double cosTheta = NAN; // cosine of the angle from BA to BC
 
   cosTheta = BAMean * BCMean / BAMean.GetNorm() / BCMean.GetNorm();
 
