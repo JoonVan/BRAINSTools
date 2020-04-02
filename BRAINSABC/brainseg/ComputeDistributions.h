@@ -70,8 +70,9 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
         const typename ByteImageType::ConstPointer     currentCandidateRegion =
           SubjectCandidateRegions[iclass].GetPointer();
 
-        // NOTE:  itk::Math:eps is too small itk::Math::eps;
-        CompensatedSummationType tmp_accumC = tbb::parallel_reduce(
+        // NOTE:                                     itk::Math:eps
+        ListOfClassStatistics[iclass].m_Weighting  = 1e-20;
+        ListOfClassStatistics[iclass].m_Weighting += tbb::parallel_reduce(
           tbb::blocked_range3d<long>(0, size[2], 1, 0, size[1], size[1] / 2, 0, size[0], 512),
           CompensatedSummationType(),
           [=](const tbb::blocked_range3d<long> & rng3d, CompensatedSummationType tmp) -> CompensatedSummationType {
@@ -97,8 +98,6 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
             a += b.GetSum();
             return a;
           });
-        tmp_accumC += 1e-20;
-        ListOfClassStatistics[iclass].m_Weighting = tmp_accumC.GetSum();
       }
     });
   // Compute the means weighted by the probability of each value.
@@ -232,6 +231,7 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
         // compute per-Image Type covariance
         for (auto mapIt = InputImageMap.begin(); mapIt != InputImageMap.end(); ++mapIt)
         {
+          //(or log(mu1) if logConvertValues )
           const double mu1 = ListOfClassStatistics[iclass].m_Means[mapIt->first];
 
           for (unsigned i = 0; i < mapIt->second.size(); ++i)
@@ -244,7 +244,7 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
 
             for (auto mapIt2 = mapIt; mapIt2 != InputImageMap.end(); ++mapIt2)
             {
-              size_t j = 0;
+              size_t j = 0;//TODO:  Should be j = i
               if (first_through_inner_loop)
               {
                 j = i;
@@ -290,8 +290,8 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
 
                             if (logConvertValues)
                             {
-                              const double diff1 = std::log(inputValue1) - mu1;
-                              const double diff2 = std::log(inputValue2) - mu2;
+                              const double diff1 = std::log(inputValue1) - mu1; // NOTE: mu1 is really 1/N * sum(log(X))
+                              const double diff2 = std::log(inputValue2) - mu2; // NOTE: mu2 is really 1/N * sum(log(X))
                               var += currentProbValue * (diff1 * diff2);
                             }
                             else

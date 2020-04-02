@@ -129,15 +129,8 @@ LLSBiasCorrector<TInputImage, TProbabilityImage>::ComputeDistributions()
   CombinedComputeDistributions<TInputImage, TProbabilityImage, MatrixType>(this->m_CandidateRegions,
                                                                            m_InputImages,
                                                                            m_BiasPosteriors,
-                                                                           this->m_ListOfClassStatistics, //
-                                                                                                          //
-                                                                                                          // This
-                                                                                                          //
-                                                                                                          // is
-                                                                                                          //
-                                                                                                          // an
-                                                                                                          //
-                                                                                                          // output!
+                                                                           this->m_ListOfClassStatistics,
+                                                                           // ListOfClassStatistics is an output!
                                                                            this->m_DebugLevel,
                                                                            true);
 }
