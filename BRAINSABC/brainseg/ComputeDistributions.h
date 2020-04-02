@@ -23,6 +23,12 @@
 #include <list>
 #include <map>
 
+#if 0 //Alternate way of computing covariance
+#include "itkListSample.h"
+#include "itkWeightedMeanSampleFilter.h"
+#include "itkWeightedCovarianceSampleFilter.h"
+#endif
+
 using ByteImageType = itk::Image<unsigned char, 3>;
 using CompensatedSummationType = itk::CompensatedSummation<double>;
 
@@ -345,7 +351,7 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
 
   if (DebugLevel > 9)
   {
-    std::cout << "=================================================" << std::endl;
+    std::cout << "=MANUAL COVARIANCE COMPUTATIONS================================================" << std::endl;
     for (LOOPITERTYPE iclass = 0; iclass < (LOOPITERTYPE)numClasses; iclass++)
     {
       unsigned ichan = 0;
@@ -359,6 +365,57 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
       muLogMacro(<< "DEBUG Covariances (class " << iclass << "):\n"
                  << ListOfClassStatistics[iclass].m_Covariance << std::endl);
     }
+#if 0  // NOT completed!
+    std::cout << "=ITK Mean COVARIANCE COMPUTATIONS================================================" << std::endl;
+    //TODO: Compute means and covariances as a test with ITK functions
+    //https://itk.org/Doxygen50/html/Examples_2Statistics_2WeightedSampleStatistics_8cxx-example.html#_a7
+    //For each sample
+    {
+      using InputImageNNInterpolationType = itk::NearestNeighborInterpolateImageFunction<TInputImage, double>;
+
+      const orderedmap<std::string, std::vector<typename InputImageNNInterpolationType::Pointer>> NNInterpMap;
+      for( auto iim = InputImageMap.begin(); iim != InputImageMap.end(); ++ iim)
+      {
+        NNInterpMap[iim->first] = std::vector<typename InputImageNNInterpolationType::Pointer>();
+        auto & currTypeList = iim->second;
+        for( auto typelistiter = currTypeList.begin(); typelistiter != currTypeList.end(); ++typelistiter)
+        {
+          typename InputImageNNInterpolationType::Pointer imInterp = InputImageNNInterpolationType::New();
+          imInterp->SetInputImage(*typelistiter);
+          NNInterpMap[iim->first].push_back(imInterp);
+        }
+      }
+
+      const LOOPITERTYPE numClasses = PosteriorsList.size();
+      const LOOPITERTYPE numModalities = InputImageMap.size();
+
+      ListOfClassStatistics.clear();
+      ListOfClassStatistics.resize(numClasses);
+
+      using MeasurementVectorType = std::vector<float>;
+      using SampleType = itk::Statistics::ListSample<MeasurementVectorType>;
+
+      SampleType::Pointer sample = SampleType::New();
+      sample->SetMeasurementVectorSize(numModalities);
+      MeasurementVectorType mv(numModalities);
+
+      itk::ImageConstIteratorWithIndex<TProbabilityImage> refProbIterator(PosteriorsList[0],PosteriorsList[0]->GetLargestPossibleRegion());
+      for(auto iim = NNInterpMap.begin(); iim != NNInterpMap.end(); ++ iim)
+      {
+        auto & currTypeList = iim->second;
+        for (auto typelistiter = currTypeList.begin(); typelistiter != currTypeList.end(); ++typelistiter)
+        {
+
+          for (refProbIterator.GoToBegin(); !refProbIterator.IsAtEnd(); ++refProbIterator)
+          {
+            auto                            currIndex = refProbIterator.GetIndex();
+            typename TInputImage::PointType currPoint;
+            PosteriorsList[0]->TransformIndexToPhysicalPoint(currIndex, currPoint);
+          }
+          sample->PushBack(mv);
+        }
+      }
+#endif
   }
 }
 
