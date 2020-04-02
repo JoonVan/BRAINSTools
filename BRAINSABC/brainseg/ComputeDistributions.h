@@ -420,3 +420,4 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
 }
 
 #endif // __ComputeDistributions__h__
+
