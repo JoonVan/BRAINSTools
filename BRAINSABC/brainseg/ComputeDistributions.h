@@ -150,14 +150,14 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                           if (im1Interp->IsInsideBuffer(currPoint))
                           {
                             currentInputValue = im1Interp->Evaluate(currPoint);
-                          }
-                          if (logConvertValues && currentInputValue > FLT_EPSILON)
-                          {
-                            muSum += currentProbValue * std::log(currentInputValue);
-                          }
-                          else
-                          {
-                            muSum += currentProbValue * (currentInputValue);
+                            if (logConvertValues && currentInputValue > FLT_EPSILON)
+                            {
+                              muSum += currentProbValue * std::log(currentInputValue);
+                            }
+                            else
+                            {
+                              muSum += currentProbValue * (currentInputValue);
+                            }
                           }
                         }
                       }
