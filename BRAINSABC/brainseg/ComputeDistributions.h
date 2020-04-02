@@ -112,17 +112,18 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
           SubjectCandidateRegions[iclass].GetPointer();
         ListOfClassStatistics[iclass].m_Means.clear();
 
-        for (auto mapInputImageMapIter = InputImageMap.begin(); mapInputImageMapIter != InputImageMap.end();
-             ++mapInputImageMapIter)
+        for (auto mapOfInputTypeListsIter = InputImageMap.begin(); mapOfInputTypeListsIter != InputImageMap.end();
+             ++mapOfInputTypeListsIter)
         {
           unsigned meanIndex(0);
 
-          ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] = 0.0;
+          ListOfClassStatistics[iclass].m_Means[mapOfInputTypeListsIter->first] = 0.0;
 
-          for (auto imIt = mapInputImageMapIter->second.begin(); imIt != mapInputImageMapIter->second.end(); ++imIt)
+          for (auto currTypeImageIter = mapOfInputTypeListsIter->second.begin();
+               currTypeImageIter != mapOfInputTypeListsIter->second.end(); ++currTypeImageIter)
           {
             typename InputImageNNInterpolationType::Pointer im1Interp = InputImageNNInterpolationType::New();
-            im1Interp->SetInputImage(*imIt);
+            im1Interp->SetInputImage(*currTypeImageIter);
 
             const CompensatedSummationType muSumFinal = tbb::parallel_reduce(
               tbb::blocked_range3d<long>(0, size[2], 1, 0, size[1], size[1] / 2, 0, size[0], 512),
@@ -170,11 +171,12 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                 return a;
               });
             const double mymean = (muSumFinal.GetSum()) / ListOfClassStatistics[iclass].m_Weighting;
-            ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] += mymean;
+            ListOfClassStatistics[iclass].m_Means[mapOfInputTypeListsIter->first] += mymean;
             ++meanIndex;
-          }
-          // averaging the means of all images of this image modality
-          ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] /= mapInputImageMapIter->second.size();
+          }// END processing list of a single image type.
+          // averaging the means (or log(mu) if logConvertValues ) of all images of this image modality
+          ListOfClassStatistics[iclass].m_Means[mapOfInputTypeListsIter->first] /=
+            mapOfInputTypeListsIter->second.size();
         }
       }
     });
