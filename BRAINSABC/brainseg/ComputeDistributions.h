@@ -322,18 +322,22 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
         // and copy to vnl matrix
         MatrixType   covtmp(numModalities, numModalities, 0.0);
         unsigned int i = 0;
-        for (auto mapIt = InputImageMap.begin(); mapIt != InputImageMap.end(); ++mapIt, ++i)
+        for (auto mapIt = InputImageMap.begin(); mapIt != InputImageMap.end(); ++mapIt)
         {
           unsigned int j = 0;
-          for (auto mapIt2 = InputImageMap.begin(); mapIt2 != InputImageMap.end(); ++mapIt2, ++j)
+          const auto first_size = static_cast<double>(mapIt->second.size());
+          for (auto mapIt2 = InputImageMap.begin(); mapIt2 != InputImageMap.end(); ++mapIt2)
           {
-            covtmp(i, j) = TypeCovariance[mapIt->first][mapIt2->first] /
-                           static_cast<double>(mapIt->second.size() * mapIt2->second.size());
+            const auto second_size = static_cast<double>(mapIt2->second.size());
+            const auto numerator = TypeCovariance[mapIt->first][mapIt2->first];
+            covtmp(i, j) =  numerator / (first_size * second_size);
             if (std::isnan(covtmp(i, j)))
             {
               itkGenericExceptionMacro(<< " ERROR:  Covariance matrix with nan values.")
             }
+            ++j;
           }
+          ++i;
         }
         ListOfClassStatistics[iclass].m_Covariance = covtmp;
       } // end covariance loop
