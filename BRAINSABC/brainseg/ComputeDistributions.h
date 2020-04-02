@@ -22,8 +22,6 @@
 #include <vector>
 #include <list>
 #include <map>
-#define EXPP(x) std::exp((x))
-#define LOGP(x) std::log((x))
 
 using ByteImageType = itk::Image<unsigned char, 3>;
 using CompensatedSummationType = itk::CompensatedSummation<double>;
@@ -33,15 +31,8 @@ void
 CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> & SubjectCandidateRegions,
                              const orderedmap<std::string, std::vector<typename TInputImage::Pointer>> & InputImageMap,
                              const std::vector<typename TProbabilityImage::Pointer> &                    PosteriorsList,
-                             std::vector<RegionStats> & ListOfClassStatistics, //
-                                                                               //
-                                                                               // This
-                                                                               //
-                                                                               // is
-                                                                               //
-                                                                               // an
-                                                                               //
-                                                                               // output!
+                             std::vector<RegionStats> & ListOfClassStatistics,
+                             // ListOfClassStatistics is an output!
                              const unsigned int DebugLevel,
                              const bool         logConvertValues)
 {
@@ -115,17 +106,17 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
           SubjectCandidateRegions[iclass].GetPointer();
         ListOfClassStatistics[iclass].m_Means.clear();
 
-        for (auto mapIt = InputImageMap.begin(); mapIt != InputImageMap.end(); ++mapIt)
+        for (auto mapInputImageMapIter = InputImageMap.begin(); mapInputImageMapIter != InputImageMap.end();
+             ++mapInputImageMapIter)
         {
           unsigned meanIndex(0);
 
-          ListOfClassStatistics[iclass].m_Means[mapIt->first] = 0.0;
+          ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] = 0.0;
 
-          for (auto imIt = mapIt->second.begin(); imIt != mapIt->second.end(); ++imIt, ++meanIndex)
+          for (auto imIt = mapInputImageMapIter->second.begin(); imIt != mapInputImageMapIter->second.end(); ++imIt)
           {
-            typename TInputImage::Pointer                   im1 = *imIt;
             typename InputImageNNInterpolationType::Pointer im1Interp = InputImageNNInterpolationType::New();
-            im1Interp->SetInputImage(im1);
+            im1Interp->SetInputImage(*imIt);
 
             const CompensatedSummationType muSumFinal = tbb::parallel_reduce(
               tbb::blocked_range3d<long>(0, size[2], 1, 0, size[1], size[1] / 2, 0, size[0], 512),
@@ -145,19 +136,22 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                       if (currentCandidateRegion->GetPixel(currIndex))
                       {
                         const double currentProbValue = currentProbImage->GetPixel(currIndex);
-                        // input volumes may have a different voxel lattice than the probability image
-                        double currentInputValue = 1;
-                        if (im1Interp->IsInsideBuffer(currPoint))
+                        if (currentProbValue > FLT_EPSILON)
                         {
-                          currentInputValue = im1Interp->Evaluate(currPoint);
-                        }
-                        if (logConvertValues)
-                        {
-                          muSum += currentProbValue * LOGP(currentInputValue);
-                        }
-                        else
-                        {
-                          muSum += currentProbValue * (currentInputValue);
+                          // input volumes may have a different voxel lattice than the probability image
+                          double currentInputValue = 1;
+                          if (im1Interp->IsInsideBuffer(currPoint))
+                          {
+                            currentInputValue = im1Interp->Evaluate(currPoint);
+                          }
+                          if (logConvertValues && currentInputValue > FLT_EPSILON)
+                          {
+                            muSum += currentProbValue * std::log(currentInputValue);
+                          }
+                          else
+                          {
+                            muSum += currentProbValue * (currentInputValue);
+                          }
                         }
                       }
                     }
@@ -170,10 +164,11 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                 return a;
               });
             const double mymean = (muSumFinal.GetSum()) / ListOfClassStatistics[iclass].m_Weighting;
-            ListOfClassStatistics[iclass].m_Means[mapIt->first] += mymean;
+            ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] += mymean;
+            ++meanIndex;
           }
           // averaging the means of all images of this image modality
-          ListOfClassStatistics[iclass].m_Means[mapIt->first] /= mapIt->second.size();
+          ListOfClassStatistics[iclass].m_Means[mapInputImageMapIter->first] /= mapInputImageMapIter->second.size();
         }
       }
     });
@@ -287,8 +282,8 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
 
                             if (logConvertValues)
                             {
-                              const double diff1 = LOGP(inputValue1) - mu1;
-                              const double diff2 = LOGP(inputValue2) - mu2;
+                              const double diff1 = std::log(inputValue1) - mu1;
+                              const double diff2 = std::log(inputValue2) - mu2;
                               var += currentProbValue * (diff1 * diff2);
                             }
                             else
@@ -334,6 +329,10 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
           {
             covtmp(i, j) = TypeCovariance[mapIt->first][mapIt2->first] /
                            static_cast<double>(mapIt->second.size() * mapIt2->second.size());
+            if (std::isnan(covtmp(i, j)))
+            {
+              itkGenericExceptionMacro(<< " ERROR:  Covariance matrix with nan values.")
+            }
           }
         }
         ListOfClassStatistics[iclass].m_Covariance = covtmp;

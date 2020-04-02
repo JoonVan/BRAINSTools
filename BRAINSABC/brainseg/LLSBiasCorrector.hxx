@@ -506,7 +506,10 @@ LLSBiasCorrector<TInputImage, TProbabilityImage>::CorrectImages(const unsigned i
   std::vector<MatrixType> invCovars;
   for (unsigned int iclass = 0; iclass < numClasses; iclass++)
   {
-    invCovars.push_back(MatrixInverseType(this->m_ListOfClassStatistics[iclass].m_Covariance).as_matrix());
+    std::cout << this->m_ListOfClassStatistics[iclass].m_Covariance << std::endl;
+    MatrixInverseType inverse_temp(this->m_ListOfClassStatistics[iclass].m_Covariance);
+    MatrixType        temp = inverse_temp.as_matrix();
+    invCovars.push_back(temp);
   }
 
   // Create matrices and vectors
@@ -613,7 +616,7 @@ LLSBiasCorrector<TInputImage, TProbabilityImage>::CorrectImages(const unsigned i
                                   inputImageValue = inputImageInterp->Evaluate(currProbPoint);
                                 }
 
-                                const double bias = LOGP(inputImageValue) - recon;
+                                const double bias = std::log(inputImageValue) - recon;
                                 //,&R_,&R_,&R_iii divide by # of images of current modality -- in essence
                                 // you're averaging them.
                                 R_i(eq, 0) += (sumW * bias) / numCurModalityImages;
@@ -816,7 +819,7 @@ LLSBiasCorrector<TInputImage, TProbabilityImage>::CorrectImages(const unsigned i
                                     std::cout << "WARNING:  Bad Scale Value Computed!" << std::endl;
                                     logFitValue = 0.0;
                                   }
-                                  const double multiplicitiveBiasCorrectionFactor = 1.0 / EXPP(logFitValue);
+                                  const double multiplicitiveBiasCorrectionFactor = 1.0 / std::exp(logFitValue);
                                   if (maskValue != 0)
                                   {
                                     if (multiplicitiveBiasCorrectionFactor > maxBiasInForegroundMask)
