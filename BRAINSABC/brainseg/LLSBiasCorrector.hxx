@@ -126,20 +126,11 @@ void
 LLSBiasCorrector<TInputImage, TProbabilityImage>::ComputeDistributions()
 {
   muLogMacro(<< "LLSBiasCorrector: Computing means and variances..." << std::endl);
-  CombinedComputeDistributions<TInputImage, TProbabilityImage, MatrixType>(this->m_CandidateRegions,
+  this->m_ListOfClassStatistics = CombinedComputeDistributions<TInputImage, TProbabilityImage, MatrixType>(this->m_CandidateRegions,
                                                                            m_InputImages,
                                                                            m_BiasPosteriors,
-                                                                           this->m_ListOfClassStatistics,
-                                                                           // ListOfClassStatistics is an output!
                                                                            this->m_DebugLevel,
                                                                            true);
-}
-
-template <typename TInputImage, typename TProbabilityImage>
-void
-LLSBiasCorrector<TInputImage, TProbabilityImage>::SetListOfClassStatistics(const std::vector<RegionStats> & regionStats)
-{
-  this->m_ListOfClassStatistics = regionStats;
 }
 
 template <typename TInputImage, typename TProbabilityImage>

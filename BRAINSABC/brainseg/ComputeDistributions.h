@@ -44,6 +44,8 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
   const LOOPITERTYPE numClasses = PosteriorsList.size();
   const LOOPITERTYPE numModalities = InputImageMap.size();
 
+  // ListOfClassStatistics is an output!
+  std::vector<RegionStats> ListOfClassStatistics;
   ListOfClassStatistics.clear();
   ListOfClassStatistics.resize(numClasses);
 
@@ -361,6 +363,7 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                  << ListOfClassStatistics[iclass].m_Covariance << std::endl);
     }
   }
+  return ListOfClassStatistics;
 }
 
 #endif // __ComputeDistributions__h__
