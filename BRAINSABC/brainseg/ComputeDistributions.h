@@ -28,8 +28,8 @@
 //#define EXPP(x) std::exp((x) - 1.0)
 //#define LOGP(x) std::log((x) + 1.0)
 inline double EXPP( double y) { return std::exp(y); }
-constexpr double min_log_value = 16*FLT_EPSILON;
-constexpr double log_small_value = -100;
+constexpr double min_log_value = 1e-3; // This assumes all input images are unsigned integer types.
+constexpr double log_small_value = -6.90; // i.e. ln(min_log_value)
 inline double LOGP( double x) { return (x > min_log_value) ? std::log( x ): log_small_value ; }
 
 using ByteImageType = itk::Image<unsigned char, 3>;
@@ -146,7 +146,7 @@ CombinedComputeDistributions(const std::vector<typename ByteImageType::Pointer> 
                         if (currentProbValue > FLT_EPSILON)
                         {
                           // input volumes may have a different voxel lattice than the probability image
-                          double currentInputValue = 1;
+                          double currentInputValue;
                           if (im1Interp->IsInsideBuffer(currPoint))
                           {
                             currentInputValue = im1Interp->Evaluate(currPoint);
