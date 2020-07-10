@@ -56,7 +56,7 @@ if(NOT DEFINED ITK_DIR AND NOT ${CMAKE_PROJECT_NAME}_USE_SYSTEM_${proj})
 
   ExternalProject_SetIfNotDefined(
     ${CMAKE_PROJECT_NAME}_${proj}_GIT_TAG
-    ab7a9e378c8eeb6f3bc9280c634d9316be906d95 # 20200709 Fixed up fftw installs
+    fix-local-fftw-install-path # 20200710 Fixed up fftw installs
     QUIET
     )
 
